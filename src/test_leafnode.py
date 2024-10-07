@@ -3,7 +3,6 @@ import unittest
 from htmlnode import HTMLNode
 from leafnode import LeafNode
 
-
 class TestTextNode(unittest.TestCase):
 
     def setUp(self):
@@ -20,7 +19,6 @@ class TestTextNode(unittest.TestCase):
         self.assertIsNone(self.node1.props)
 
         self.assertEqual(self.node2.props, {"href": "https://example.com"})
-        
 
     def test_not_eq(self):
         """Tests if the __eq__ method is working as intended, with non-equal objects"""
@@ -29,10 +27,7 @@ class TestTextNode(unittest.TestCase):
     def test_empty_value(self):
         """Tests if the exception is called correctly"""
         with self.assertRaises(ValueError):
-                    self.node3 = LeafNode("p", None, [self.node1], {"class": "container"})
-
-    
-
+            self.node3 = LeafNode("p", None, [self.node1], {"class": "container"})
 
 if __name__ == "__main__":
     unittest.main()
