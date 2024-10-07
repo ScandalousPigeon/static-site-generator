@@ -1,6 +1,6 @@
 class TextNode:
     
-    def __init__(self, text, text_type, url=None):
+    def __init__(self, text: str, text_type: str, url=None):
         """
         Initialise a TextNode instance.
 
