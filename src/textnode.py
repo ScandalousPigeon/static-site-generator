@@ -29,7 +29,7 @@ class TextNode:
 
     def __repr__(self):
         """
-        String representation of the object
+        String representation of the current TextNode instance
         """
         return f"TextNode({self.text}, {self.text_type}, {self.url})"
 
