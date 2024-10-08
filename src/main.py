@@ -1,4 +1,4 @@
-from textnode import TextNode
+from htmlnode import TextNode
 
 def main():
     dummy = TextNode("The Infinite Pigeon Theorem", "bold", "https://xmxx.com")

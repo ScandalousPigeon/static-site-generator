@@ -2,7 +2,6 @@ import unittest
 
 from htmlnode import HTMLNode
 
-
 class TestTextNode(unittest.TestCase):
 
     def setUp(self):

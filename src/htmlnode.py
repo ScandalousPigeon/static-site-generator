@@ -1,3 +1,38 @@
+class TextNode:
+    
+    def __init__(self, text: str, text_type: str, url=None):
+        """
+        Initialise a TextNode instance.
+
+        Args:
+            text (string): text content of the node
+            text_type (string): type of text this node contains
+            url (string, optional): url of the link or image, defaults to None
+        """
+        self.text = text
+        self.text_type = text_type
+        self.url = url
+
+    def __eq__(self, other):
+        """
+        Only True if all properties are True.
+        Properties are:
+            self.text
+            self.text_type
+            self.url
+        """
+        if self.text == other.text:
+            if self.text_type == other.text_type:
+                if self.url == other.url:
+                    return True
+        return False
+
+    def __repr__(self):
+        """
+        String representation of the current TextNode instance
+        """
+        return f"TextNode({self.text}, {self.text_type}, {self.url})"
+
 class HTMLNode:
 
     def __init__(self, tag=None, value=None, children=None, props=None):
@@ -36,3 +71,63 @@ class HTMLNode:
             new_dict = [f'{entry}="{props[entry]}"' for entry in props]
             return " " + " ".join(new)
         return ""
+
+class LeafNode(HTMLNode):
+    def __init__(self, tag, value, children=None, props=None):
+        """Initialise a LeafNode object, inherits from HTMLNode"""
+        if value is None or value == "":
+            raise ValueError("LeafNode must have a non-empty value")
+        super().__init__(tag, value, None, props)
+        
+    def to_html(self):
+        if not self.value:
+            raise ValueError
+        if self.tag:
+            return f"<{self.tag}>{self.value}</{self.tag}>"
+        else:
+            return self.value
+
+class ParentNode(HTMLNode):
+    def __init__(self, tag, children, props=None):
+        if children is None or children == []:
+            raise ValueError("ParentNode must have non-empty children")
+        super().__init__(tag, None, children, props)
+    
+    def to_html(self):
+        if not self.tag:
+            raise ValueError("ParentNode must have a tag")
+        if not self.children:
+            raise ValueError("ParentNode must have children")
+        
+        copy = self.children.copy()
+        collected = ""
+        
+        for child in copy:
+            collected += child.to_html()
+
+        return f"<{self.tag}{self.props_to_html()}>{collected}</{self.tag}>"
+
+def text_node_to_html_node(text_node: TextNode):
+    """
+    Function to convert a TextNode into a LeafNode.
+    
+    Args:
+        text_node (TextNode): a TextNode object
+
+    Returns:
+        a LeafNode object
+    """
+    if text_node.text_type == "text":
+        return LeafNode(value=text_node.text)
+    if text_node.text_type == "bold":
+        return LeafNode(tag="b", value=text_node.text)
+    if text_node.text_type == "italic":
+        return LeafNode(tag="i", value=text_node.text)
+    if text_node.text_type == "code":
+        return LeafNode(tag="code", value=text_node.text)
+    if text_node.text_type == "link":
+        return LeafNode(tag="a", value=text_node.text, props={"href": text_node.url})
+    if text_node.text_type == "image":
+        return LeafNode(tag="img", value="", props={"href": text_node.url, "alt": text_node.text})
+
+    raise Exception("TextNode has an invalid type")
