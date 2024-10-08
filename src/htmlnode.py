@@ -75,12 +75,19 @@ class HTMLNode:
 class LeafNode(HTMLNode):
     def __init__(self, tag, value, children=None, props=None):
         """Initialise a LeafNode object, inherits from HTMLNode"""
-        if value is None or value == "":
+        if value == "":
             raise ValueError("LeafNode must have a non-empty value")
         super().__init__(tag, value, None, props)
+
+    def __eq__(self, other):
+        if self.tag == other.tag:
+            if self.value == other.value:
+                if self.props == other.props:
+                    return True
+        return False
         
     def to_html(self):
-        if not self.value:
+        if self.value == "":
             raise ValueError
         if self.tag:
             return f"<{self.tag}>{self.value}</{self.tag}>"
@@ -118,7 +125,7 @@ def text_node_to_html_node(text_node: TextNode):
         a LeafNode object
     """
     if text_node.text_type == "text":
-        return LeafNode(value=text_node.text)
+        return LeafNode(tag=None, value=text_node.text)
     if text_node.text_type == "bold":
         return LeafNode(tag="b", value=text_node.text)
     if text_node.text_type == "italic":
@@ -128,6 +135,6 @@ def text_node_to_html_node(text_node: TextNode):
     if text_node.text_type == "link":
         return LeafNode(tag="a", value=text_node.text, props={"href": text_node.url})
     if text_node.text_type == "image":
-        return LeafNode(tag="img", value="", props={"href": text_node.url, "alt": text_node.text})
+        return LeafNode(tag="img", value=None, props={"src": text_node.url, "alt": text_node.text})
 
     raise Exception("TextNode has an invalid type")

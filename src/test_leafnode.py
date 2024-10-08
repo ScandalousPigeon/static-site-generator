@@ -22,11 +22,6 @@ class TestTextNode(unittest.TestCase):
     def test_not_eq(self):
         """Tests if the __eq__ method is working as intended, with non-equal objects"""
         self.assertNotEqual(self.node2, self.node3)
-    
-    def test_empty_value(self):
-        """Tests if the exception is called correctly"""
-        with self.assertRaises(ValueError):
-            self.node3 = LeafNode("p", None, [self.node1], {"class": "container"})
 
 if __name__ == "__main__":
     unittest.main()
