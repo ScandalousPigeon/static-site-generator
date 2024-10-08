@@ -32,6 +32,7 @@ class HTMLNode:
         """
         Returns a string that represents the HTML attributes of the node
         """
-        if props:
+        if self.props:
             new_dict = [f'{entry}="{props[entry]}"' for entry in props]
             return " " + " ".join(new)
+        return ""

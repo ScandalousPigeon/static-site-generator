@@ -4,23 +4,21 @@ class ParentNode(HTMLNode):
     def __init__(self, tag, children, props=None):
         if children is None or children == []:
             raise ValueError("ParentNode must have non-empty children")
-        super().__init__(tag, children, props)
+        super().__init__(tag, None, children, props)
     
-    def to_html(self, collected=""):
+    def to_html(self):
         if not self.tag:
-            raise ValueError("node has no tag")
+            raise ValueError("ParentNode must have a tag")
         if not self.children:
-            raise ValueError("node has no children")
+            raise ValueError("ParentNode must have children")
         
         copy = self.children.copy()
+        collected = ""
         
         for child in copy:
-            if isinstance(child, LeafNode):
-                collected += child.to_html()
-            else:
-                collected += child.to_html(collected)
+            collected += child.to_html()
 
-        return f"<{self.tag}>" + collected + f"</{self.tag}>"
+        return f"<{self.tag}{self.props_to_html()}>{collected}</{self.tag}>"
 
 
             

@@ -13,4 +13,4 @@ class LeafNode(HTMLNode):
         if self.tag:
             return f"<{self.tag}>{self.value}</{self.tag}>"
         else:
-            return value
+            return self.value
