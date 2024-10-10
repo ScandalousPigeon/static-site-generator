@@ -16,11 +16,13 @@ class TestHTMLNodes(unittest.TestCase):
         self.text_type_image = TextNode(text="An image of an egg.", text_type="image", url="https://www.egg.com")
     
     def test_invalid(self):
+        """Tests if an Exception is raised correctly if an invalid type is passed"""
         with self.assertRaises(Exception):
             invalid_node = TextNode(text="lmao", text_type="goofy-ah type")
             text_node_to_html_node(invalid_node)
 
     def test_correct_output(self):
+        """Tests each possible type of tag"""
         self.assertEqual(text_node_to_html_node(self.text_type_text), LeafNode(tag=None, value="What, you egg?"))
         self.assertEqual(text_node_to_html_node(self.text_type_bold), LeafNode(tag="b", value="Stop right there criminal scum!"))
         self.assertEqual(text_node_to_html_node(self.text_type_italic), LeafNode(tag="i", value='"The vastness of the internet devours us." - Gerd von Rundstedt, 1942'))
