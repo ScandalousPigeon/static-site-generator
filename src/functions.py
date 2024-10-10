@@ -1,4 +1,5 @@
 from htmlnode import *
+import re
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     delimited_nodes = []
@@ -17,3 +18,7 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
         else:
             delimited_nodes.append(node)
     return delimited_nodes
+
+def extract_markdown_images(text):
+    pattern = r"\[(.*?)\]\((.*?)\)"
+    return re.findall(pattern, text) 
