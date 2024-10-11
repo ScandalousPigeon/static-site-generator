@@ -52,5 +52,39 @@ class TextExtractMarkdownImages(unittest.TestCase):
         result = extract_markdown_images(text)
         self.assertEqual(result, expected)
 
+class TestSplitNodesImage(unittest.TestCase):
+    def test_split_nodes_image(self):
+        node = TextNode("This is an image ![alt text](https://example.com/image.png) in text", "text")
+        expected = [
+            TextNode("This is an image ", "text"),
+            TextNode("alt text", "image", "https://example.com/image.png"),
+            TextNode(" in text", "text")
+        ]
+        result = split_nodes_image([node])
+        self.assertEqual(result, expected)
+
+    def test_no_images(self):
+        node = TextNode("This text has no images.", "text")
+        expected = [TextNode("This text has no images.", "text")]
+        result = split_nodes_image([node])
+        self.assertEqual(result, expected)
+
+class TestSplitNodesLink(unittest.TestCase):
+    def test_split_nodes_link(self):
+        node = TextNode("This is a link [link text](https://example.com) in text", "text")
+        expected = [
+            TextNode("This is a link ", "text"),
+            TextNode("link text", "link", "https://example.com"),
+            TextNode(" in text", "text")
+        ]
+        result = split_nodes_link([node])
+        self.assertEqual(result, expected)
+
+    def test_no_links(self):
+        node = TextNode("This text has no links.", "text")
+        expected = [TextNode("This text has no links.", "text")]
+        result = split_nodes_link([node])
+        self.assertEqual(result, expected)
+
 if __name__ == "__main__":
     unittest.main()
