@@ -51,7 +51,6 @@ def split_nodes_image(old_nodes):
     
     for old_node in old_nodes:
         split_parts = re.split(pattern, old_node.text)
-        matches = re.findall(pattern, old_node.text)
         
         # Iterate through the parts (split text) and images (matches)
         part_index = 0
@@ -59,22 +58,32 @@ def split_nodes_image(old_nodes):
             if part:
                 if not re.search(pattern, part):
                     new_nodes.append(TextNode(part, "text"))
+                else:
+                    extracted_image = extract_markdown_images(part)
+                    new_nodes.append(TextNode(extracted_image[0][0], "image", extracted_image[0][1]))
             
-            # Add corresponding image node if there are matches left
-            if part_index < len(matches):
-                image_data = extract_markdown_images(matches[part_index])
-                if image_data:
-                    image_alt, image_link = image_data[0]
-                    new_nodes.append(TextNode(image_alt, "image", image_link))
-                part_index += 1
     
     return new_nodes
 
-
-
 def split_nodes_link(old_nodes):
     new_nodes = []
-    pass
+    
+    # Pattern to match [some text](link)
+    pattern = r"(\[[^\[\]]*\]\([^\(\)]*\))"
+    
+    for old_node in old_nodes:
+        split_parts = re.split(pattern, old_node.text)
+        print(split_parts)
+        
+        for part in split_parts:
+            if part:
+                if not re.search(pattern, part):
+                    new_nodes.append(TextNode(part, "text"))
+                else:
+                    extracted_image = extract_markdown_links(part)
+                    new_nodes.append(TextNode(extracted_image[0][0], "link", extracted_image[0][1]))
+    
+    return new_nodes
 
 def text_to_textnodes(text):
     pass
