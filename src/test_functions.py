@@ -143,5 +143,23 @@ class TestTextToTextNodes(unittest.TestCase):
         result = text_to_textnodes(input)
         self.assertEqual(expected, result)
 
+class TestMarkdownToBlocks(unittest.TestCase):
+    def test_given_example(self):
+        input = """# This is a heading
+
+This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+
+* This is the first list item in a list block
+* This is a list item
+* This is another list item"""
+        expected = [
+            "# This is a heading",
+            "This is a paragraph of text. It has some **bold** and *italic* words inside of it.",
+            """* This is the first list item in a list block
+* This is a list item
+* This is another list item"""
+        ]
+        self.assertEqual(markdown_to_blocks(input), expected)
+
 if __name__ == "__main__":
     unittest.main()
