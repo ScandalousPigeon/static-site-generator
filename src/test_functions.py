@@ -125,5 +125,23 @@ class TestSplitNodesLink(unittest.TestCase):
     def test_multiple_nodes(self):
         node_one = "lmao"
 
+class TestTextToTextNodes(unittest.TestCase):
+    def test_given_example(self):
+        input = "This is **text** with an *italic* word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+        expected = [
+            TextNode("This is ", "text"),
+            TextNode("text", "bold"),
+            TextNode(" with an ", "text"),
+            TextNode("italic", "italic"),
+            TextNode(" word and a ", "text"),
+            TextNode("code block", "code"),
+            TextNode(" and an ", "text"),
+            TextNode("obi wan image", "image", "https://i.imgur.com/fJRm4Vk.jpeg"),
+            TextNode(" and a ", "text"),
+            TextNode("link", "link", "https://boot.dev"),
+        ]
+        result = text_to_textnodes(input)
+        self.assertEqual(expected, result)
+
 if __name__ == "__main__":
     unittest.main()

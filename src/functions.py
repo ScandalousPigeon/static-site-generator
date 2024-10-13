@@ -2,6 +2,22 @@ from htmlnode import *
 import re
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    """
+    Splits text according to delimiter.
+    
+    Takes a list of TextNodes and splits the text into parts,
+    depending on what delimiter was specified. The text between
+    the delimiters will be of the specified text_type, and the
+    text outside will be of text_type "text".
+    
+    Args:
+        old_nodes (list): a list of TextNode objects to be processed.
+        delimiter (string): what delimiter to split the text to.
+        text_type (string): what text_type the parts between delimiters should be.
+    
+    Returns:
+        list: a list of new TextNode objects.
+    """
     delimited_nodes = []
     for node in old_nodes:
         if node.text_type == "text":
@@ -35,15 +51,16 @@ def extract_markdown_links(text):
     pattern = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
     return re.findall(pattern, text)
 
-def extract_markdown_images(text):
-    """
-    Matches a pattern ![some text](image)
-    Returns a list of tuples containing (some text, image)
-    """
-    pattern = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
-    return re.findall(pattern, text)
-
 def split_nodes_image(old_nodes):
+    """
+    Splits lists of nodes [node1, node2, ...] into new nodes.
+
+    Takes a list of TextNode objects, splits them according to a 
+    pattern ![alt text](image), and returns a list of new TextNode 
+    objects. TextNodes will be TextNode("content", text_type="text")
+    if outside matched segments, and the matched patterns will become
+    TextNode("alt text", text_type="image", "image").
+    """
     new_nodes = []
     
     # Pattern to match markdown images
@@ -52,12 +69,11 @@ def split_nodes_image(old_nodes):
     for old_node in old_nodes:
         split_parts = re.split(pattern, old_node.text)
         
-        # Iterate through the parts (split text) and images (matches)
         part_index = 0
         for part in split_parts:
             if part:
                 if not re.search(pattern, part):
-                    new_nodes.append(TextNode(part, "text"))
+                    new_nodes.append(TextNode(part, old_node.text_type, old_node.url))
                 else:
                     extracted_image = extract_markdown_images(part)
                     new_nodes.append(TextNode(extracted_image[0][0], "image", extracted_image[0][1]))
@@ -66,6 +82,15 @@ def split_nodes_image(old_nodes):
     return new_nodes
 
 def split_nodes_link(old_nodes):
+    """
+    Splits lists of nodes [node1, node2, ...] into new nodes.
+
+    Takes a list of TextNode objects, splits them according to a 
+    pattern [some text](link), and returns a list of new TextNode 
+    objects. TextNodes will be TextNode("content", text_type="text")
+    if outside matched segments, and the matched patterns will become
+    TextNode("some text", text_type="link", "link").
+    """
     new_nodes = []
     
     # Pattern to match [some text](link)
@@ -73,12 +98,11 @@ def split_nodes_link(old_nodes):
     
     for old_node in old_nodes:
         split_parts = re.split(pattern, old_node.text)
-        print(split_parts)
         
         for part in split_parts:
             if part:
                 if not re.search(pattern, part):
-                    new_nodes.append(TextNode(part, "text"))
+                    new_nodes.append(TextNode(part, old_node.text_type, old_node.url))
                 else:
                     extracted_image = extract_markdown_links(part)
                     new_nodes.append(TextNode(extracted_image[0][0], "link", extracted_image[0][1]))
@@ -86,4 +110,20 @@ def split_nodes_link(old_nodes):
     return new_nodes
 
 def text_to_textnodes(text):
-    pass
+    """
+    Takes a string and converts it to a list of TextNodes using the above functions.
+    
+    Args:
+        text (string): the string to be converted.
+    
+    Returns:
+        list: a list of new TextNode objects.
+    """
+    new_nodes = [TextNode(text, "text")]
+    new_nodes = split_nodes_image(new_nodes)
+    new_nodes = split_nodes_link(new_nodes)
+    new_nodes = split_nodes_delimiter(new_nodes, "**", "bold")
+    new_nodes = split_nodes_delimiter(new_nodes, "*", "italic")
+    new_nodes = split_nodes_delimiter(new_nodes, "`", "code")
+    
+    return new_nodes
