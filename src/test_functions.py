@@ -160,6 +160,39 @@ This is a paragraph of text. It has some **bold** and *italic* words inside of i
 * This is another list item"""
         ]
         self.assertEqual(markdown_to_blocks(input), expected)
+        
+class TestBlockToBlockType(unittest.TestCase):
+    import unittest
+
+class TestBlockToBlockType(unittest.TestCase):
+    
+    def test_heading(self):
+        self.assertEqual(block_to_block_type("# Heading level 1"), "heading")
+        self.assertEqual(block_to_block_type("###### Heading level 6"), "heading")
+        self.assertNotEqual(block_to_block_type("####### Invalid heading"), "heading")
+    
+    def test_code_block(self):
+        self.assertEqual(block_to_block_type("```\ncode block\n```"), "code")
+        self.assertNotEqual(block_to_block_type("```\ncode block"), "code")
+    
+    def test_quote(self):
+        self.assertEqual(block_to_block_type("> This is a quote\n> Spanning multiple lines"), "quote")
+        self.assertNotEqual(block_to_block_type("This is not a quote"), "quote")
+
+    def test_unordered_list(self):
+        self.assertEqual(block_to_block_type("* Item 1\n* Item 2"), "unordered_list")
+        self.assertEqual(block_to_block_type("- Item 1\n- Item 2"), "unordered_list")
+        self.assertNotEqual(block_to_block_type("+ Item 1\n+ Item 2"), "unordered_list")  # Not supported as per current function logic
+
+    def test_ordered_list(self):
+        self.assertEqual(block_to_block_type("1. Item 1\n2. Item 2"), "ordered_list")
+        self.assertEqual(block_to_block_type("9. Item 1\n10. Item 2"), "ordered_list")
+        self.assertNotEqual(block_to_block_type("No ordered list here"), "ordered_list")
+
+    def test_paragraph(self):
+        self.assertEqual(block_to_block_type("This is a paragraph with some text."), "paragraph")
+        self.assertEqual(block_to_block_type("Another paragraph, spanning multiple lines.\nStill part of the same paragraph."), "paragraph")
+        self.assertNotEqual(block_to_block_type("> Not a paragraph"), "paragraph")
 
 if __name__ == "__main__":
     unittest.main()

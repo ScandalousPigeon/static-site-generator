@@ -131,3 +131,57 @@ def text_to_textnodes(text):
 def markdown_to_blocks(markdown):
     blocks = markdown.split("\n\n")
     return [block.strip() for block in blocks]
+
+def block_to_block_type(block):
+    """
+    Function that tells you what type of block it is.
+
+    Takes a block of markdown text and returns a string representing
+    the type of block (heading, code, quote, unordered list, ordered
+    list or paragraph).
+    """
+    # testing if heading
+    if block.startswith("#"):
+        number_of_hashes = 0
+        for ch in block:
+            if ch == "#":
+                number_of_hashes += 1
+            else:
+                break
+        if 1 <= number_of_hashes <= 6:
+            return "heading"
+    
+    # testing if code
+    if block.startswith("```") and block.endswith("```"):
+        return "code"
+    
+    # testing if quote
+    is_quote = True
+    test_for_quote = block.split("\n")
+    for line in test_for_quote:
+        if line[0] != ">":
+            is_quote = False
+            break
+    if is_quote:
+        return "quote"
+    
+    # testing if unordered list
+    is_unordered_list = True
+    test_for_unordered_list = block.split("\n")
+    for line in test_for_quote:
+        if line[0] not in "*-":
+            is_unordered_list = False
+    if is_unordered_list:
+        return "unordered_list"
+    
+    # testing if ordered_list
+    is_ordered_list = True
+    test_for_ordered_list = block.split("\n")
+    for line in test_for_ordered_list:
+        if line[0] not in "1234567890" and line[1:3] != ". ":
+            is_ordered_list = False
+    if is_ordered_list:
+        return "ordered_list"
+
+    # if none of the above, it is a paragraph
+    return "paragraph"
