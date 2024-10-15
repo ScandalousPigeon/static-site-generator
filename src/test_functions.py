@@ -194,5 +194,119 @@ class TestBlockToBlockType(unittest.TestCase):
         self.assertEqual(block_to_block_type("Another paragraph, spanning multiple lines.\nStill part of the same paragraph."), "paragraph")
         self.assertNotEqual(block_to_block_type("> Not a paragraph"), "paragraph")
 
+class TestMarkdownToHtmlNode(unittest.TestCase):
+    def test_empty_input(self):
+        with self.assertRaises(Exception) as context:
+            markdown_to_html_node("")
+        self.assertEqual(str(context.exception), "input cannot be empty")
+
+    def test_heading(self):
+        markdown = "### Heading Text"
+        result = markdown_to_html_node(markdown)
+        expected = HTMLNode(tag="div", children=[
+            HTMLNode(tag="h3", children=parse_raw_text("Heading Text"))
+        ])
+        self.assertEqual(result, expected)
+
+    def test_code_block(self):
+        markdown = "```\ncode example\n```"
+        result = markdown_to_html_node(markdown)
+        expected = HTMLNode(tag="div", children=[
+            HTMLNode(tag="pre", children=[
+                HTMLNode(tag="code", value="code example")
+            ])
+        ])
+        self.assertEqual(result, expected)
+
+    def test_blockquote(self):
+        markdown = "> Quote text\n> More quote text"
+        result = markdown_to_html_node(markdown)
+        stripped_block = "Quote text\nMore quote text"
+        expected = HTMLNode(tag="div", children=[
+            HTMLNode(tag="blockquote", children=parse_raw_text(stripped_block))
+        ])
+        self.assertEqual(result, expected)
+
+    def test_unordered_list(self):
+        markdown = "- Item 1\n- Item 2"
+        result = markdown_to_html_node(markdown)
+        expected = HTMLNode(tag="div", children=[
+            HTMLNode(tag="ul", children=[
+                HTMLNode(tag="li", children=parse_raw_text("Item 1")),
+                HTMLNode(tag="li", children=parse_raw_text("Item 2"))
+            ])
+        ])
+        self.assertEqual(result, expected)
+
+    def test_ordered_list(self):
+        markdown = "1. Item 1\n2. Item 2"
+        result = markdown_to_html_node(markdown)
+        expected = HTMLNode(tag="div", children=[
+            HTMLNode(tag="ol", children=[
+                HTMLNode(tag="li", children=parse_raw_text("Item 1")),
+                HTMLNode(tag="li", children=parse_raw_text("Item 2"))
+            ])
+        ])
+        self.assertEqual(result, expected)
+
+    def test_paragraph(self):
+        markdown = "This is a paragraph."
+        result = markdown_to_html_node(markdown)
+        expected = HTMLNode(tag="div", children=[
+            HTMLNode(tag="p", children=parse_raw_text("This is a paragraph."))
+        ])
+        self.assertEqual(result, expected)
+
+    def test_mixed_blocks(self):
+        markdown = "### Heading\n\nThis is a paragraph.\n\n- Item 1\n- Item 2\n\n1. Ordered item 1\n2. Ordered item 2"
+        result = markdown_to_html_node(markdown)
+        expected = HTMLNode(tag="div", children=[
+            HTMLNode(tag="h3", children=parse_raw_text("Heading")),
+            HTMLNode(tag="p", children=parse_raw_text("This is a paragraph.")),
+            HTMLNode(tag="ul", children=[
+                HTMLNode(tag="li", children=parse_raw_text("Item 1")),
+                HTMLNode(tag="li", children=parse_raw_text("Item 2"))
+            ]),
+            HTMLNode(tag="ol", children=[
+                HTMLNode(tag="li", children=parse_raw_text("Ordered item 1")),
+                HTMLNode(tag="li", children=parse_raw_text("Ordered item 2"))
+            ])
+        ])
+        self.assertEqual(result, expected)
+
+    def test_heading_and_code(self):
+        markdown = "# Heading\n\n```\ncode example\n```"
+        result = markdown_to_html_node(markdown)
+        expected = HTMLNode(tag="div", children=[
+            HTMLNode(tag="h1", children=parse_raw_text("Heading")),
+            HTMLNode(tag="pre", children=[
+                HTMLNode(tag="code", value="code example")
+            ])
+        ])
+        self.assertEqual(result, expected)
+
+    def test_quote_and_list(self):
+        markdown = "> Quote text\n\n- List item 1\n- List item 2"
+        result = markdown_to_html_node(markdown)
+        stripped_block = "Quote text"
+        expected = HTMLNode(tag="div", children=[
+            HTMLNode(tag="blockquote", children=parse_raw_text(stripped_block)),
+            HTMLNode(tag="ul", children=[
+                HTMLNode(tag="li", children=parse_raw_text("List item 1")),
+                HTMLNode(tag="li", children=parse_raw_text("List item 2"))
+            ])
+        ])
+        self.assertEqual(result, expected)
+
+    def test_multiple_headings(self):
+        markdown = "# Heading 1\n## Heading 2\n### Heading 3"
+        result = markdown_to_html_node(markdown)
+        expected = HTMLNode(tag="div", children=[
+            HTMLNode(tag="h1", children=parse_raw_text("Heading 1")),
+            HTMLNode(tag="h2", children=parse_raw_text("Heading 2")),
+            HTMLNode(tag="h3", children=parse_raw_text("Heading 3"))
+        ])
+        self.assertEqual(result, expected)
+
 if __name__ == "__main__":
     unittest.main()

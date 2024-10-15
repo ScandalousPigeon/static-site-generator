@@ -24,6 +24,14 @@ class HTMLNode:
         """
         return f"HTMLNode('{self.tag}', '{self.value}', {self.children}, {self.props})"
 
+    def __eq__(self, other):
+        if self.tag == other.tag:
+            if self.value == other.value:
+                if self.children == other.children:
+                    if self.props == other.props:
+                        return True
+        return False
+
     def to_html(self):
         """
         To be overridden by child classes; they will render themselves as html

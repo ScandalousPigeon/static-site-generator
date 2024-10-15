@@ -194,7 +194,7 @@ def markdown_to_html_node(markdown):
     Function to convert a full markdown document to a single HTMLNode.
     """
 
-    if not raw_text:
+    if not markdown:
         raise Exception("input cannot be empty")
 
     blocks = markdown_to_blocks(markdown)
@@ -204,26 +204,27 @@ def markdown_to_html_node(markdown):
         block_type = block_to_block_type(block)
         match block_type:
             case "heading":
-                number_of_hashes = 0
-                for h in block[0:7]:
-                    if h == "#":
-                        number_of_hashes += 1
-                    else:
-                        break
-                tag = f"h{number_of_hashes}"
-                stripped_block = block.lstrip("#")
-                stripped_block = stripped_block.strip()
-                parsed_raw_text = parse_raw_text(stripped_block)
-                new_child_node = HTMLNode(tag=tag, children=parsed_raw_text)
-                children.append(new_child_node)
+                split_block = block.split("\n")
+                for line in split_block:
+                    number_of_hashes = 0
+                    for h in line:
+                        if h == "#":
+                            number_of_hashes += 1
+                        else:
+                            break
+                    tag = f"h{number_of_hashes}"
+                    stripped_line = line.lstrip("#").strip()
+                    parsed_raw_text = parse_raw_text(stripped_line)
+                    new_child_node = HTMLNode(tag=tag, children=parsed_raw_text)
+                    children.append(new_child_node)
             case "code":
                 tag = "code"
-                stripped_block = block.strip()
+                stripped_block = block.strip().strip("`").strip()
                 new_child_node = HTMLNode(tag="pre", children=[HTMLNode(tag=tag, value=stripped_block)])
                 children.append(new_child_node)
             case "quote":
                 tag = "blockquote"
-                stripped_block = block.lstrip(">")
+                stripped_block = "\n".join([line.lstrip("> ").rstrip() for line in block.split("\n")])
                 parsed_raw_text = parse_raw_text(stripped_block)
                 new_child_node = HTMLNode(tag=tag, value=None, children=parsed_raw_text)
                 children.append(new_child_node)
@@ -232,7 +233,7 @@ def markdown_to_html_node(markdown):
                 list_items = block.split("\n")
                 parsed_list_items = []
                 for item in list_items:
-                    parsed_list_items.append(parse_raw_text(item))
+                    parsed_list_items.append(parse_raw_text(item[1:].lstrip()))
                 new_child_node = HTMLNode(tag=tag, value=None, children=[HTMLNode(tag="li", children=item) for item in parsed_list_items])
                 children.append(new_child_node)
             case "ordered_list":
@@ -240,7 +241,7 @@ def markdown_to_html_node(markdown):
                 list_items = block.split("\n")
                 parsed_list_items = []
                 for item in list_items:
-                    parsed_list_items.append(parse_raw_text(item))
+                    parsed_list_items.append(parse_raw_text(item[2:].lstrip()))
                 new_child_node = HTMLNode(tag=tag, value=None, children=[HTMLNode(tag="li", children=item) for item in parsed_list_items])
                 children.append(new_child_node)
             case "paragraph":
