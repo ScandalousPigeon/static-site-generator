@@ -185,3 +185,71 @@ def block_to_block_type(block):
 
     # if none of the above, it is a paragraph
     return "paragraph"
+
+def parse_raw_text(raw_text):
+    return [text_node_to_html_node(node) for node in text_to_textnodes(raw_text)]
+
+def markdown_to_html_node(markdown):
+    """
+    Function to convert a full markdown document to a single HTMLNode.
+    """
+
+    if not raw_text:
+        raise Exception("input cannot be empty")
+
+    blocks = markdown_to_blocks(markdown)
+    children = []
+
+    for block in blocks:
+        block_type = block_to_block_type(block)
+        match block_type:
+            case "heading":
+                number_of_hashes = 0
+                for h in block[0:7]:
+                    if h == "#":
+                        number_of_hashes += 1
+                    else:
+                        break
+                tag = f"h{number_of_hashes}"
+                stripped_block = block.lstrip("#")
+                stripped_block = stripped_block.strip()
+                parsed_raw_text = parse_raw_text(stripped_block)
+                new_child_node = HTMLNode(tag=tag, children=parsed_raw_text)
+                children.append(new_child_node)
+            case "code":
+                tag = "code"
+                stripped_block = block.strip()
+                new_child_node = HTMLNode(tag="pre", children=[HTMLNode(tag=tag, value=stripped_block)])
+                children.append(new_child_node)
+            case "quote":
+                tag = "blockquote"
+                stripped_block = block.lstrip(">")
+                parsed_raw_text = parse_raw_text(stripped_block)
+                new_child_node = HTMLNode(tag=tag, value=None, children=parsed_raw_text)
+                children.append(new_child_node)
+            case "unordered_list":
+                tag = "ul"
+                list_items = block.split("\n")
+                parsed_list_items = []
+                for item in list_items:
+                    parsed_list_items.append(parse_raw_text(item))
+                new_child_node = HTMLNode(tag=tag, value=None, children=[HTMLNode(tag="li", children=item) for item in parsed_list_items])
+                children.append(new_child_node)
+            case "ordered_list":
+                tag = "ol"
+                list_items = block.split("\n")
+                parsed_list_items = []
+                for item in list_items:
+                    parsed_list_items.append(parse_raw_text(item))
+                new_child_node = HTMLNode(tag=tag, value=None, children=[HTMLNode(tag="li", children=item) for item in parsed_list_items])
+                children.append(new_child_node)
+            case "paragraph":
+                tag = "p"
+                parsed_raw_text = parse_raw_text(block)
+                new_child_node = HTMLNode(tag=tag, children=parsed_raw_text)
+                children.append(new_child_node)
+            case _:
+                raise Exception("invalid block type")
+
+    new_node = HTMLNode(tag="div", children=children)
+    return new_node
