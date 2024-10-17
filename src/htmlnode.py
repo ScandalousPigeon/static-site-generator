@@ -43,8 +43,8 @@ class HTMLNode:
         Returns a string that represents the HTML attributes of the node
         """
         if self.props:
-            new_dict = [f'{entry}="{self.props[entry]}"' for entry in props]
-            return " " + " ".join(new)
+            new_dict = [f'{entry}="{self.props[entry]}"' for entry in self.props]
+            return " " + " ".join(new_dict)
         return ""
 
 class LeafNode(HTMLNode):
@@ -65,12 +65,15 @@ class LeafNode(HTMLNode):
         return self.value
         
     def to_html(self):
-        if self.value == "":
-            raise ValueError
-        if self.tag:
+        if self.tag == "img":
+            return f"<{self.tag}{self.props_to_html()} />"
+        elif self.tag == "a":
+            return f'<{self.tag}{self.props_to_html()}>{self.value}</{self.tag}>'
+        elif self.tag:
             return f"<{self.tag}>{self.value}</{self.tag}>"
         else:
             return self.value
+
 
 class ParentNode(HTMLNode):
     def __init__(self, tag, children, props=None):
@@ -119,7 +122,7 @@ def text_node_to_html_node(text_node: TextNode):
     if text_node.text_type == "code":
         return LeafNode(tag="code", value=text_node.text)
     if text_node.text_type == "link":
-        return LeafNode(tag="a", value=text_node.text, props={"href": text_node.url})
+        return LeafNode(tag="a", value=text_node.text, props={"href": text_node.url})  # Ensure href is set
     if text_node.text_type == "image":
         return LeafNode(tag="img", value=None, props={"src": text_node.url, "alt": text_node.text})
 

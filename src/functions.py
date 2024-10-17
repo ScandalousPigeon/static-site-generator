@@ -1,9 +1,13 @@
 from htmlnode import *
 import re
 
+import re
+
+import re
+
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     """
-    Splits text according to delimiter.
+    Splits text according to delimiter using regular expressions for better accuracy.
     
     Takes a list of TextNodes and splits the text into parts,
     depending on what delimiter was specified. The text between
@@ -12,22 +16,47 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     
     Args:
         old_nodes (list): a list of TextNode objects to be processed.
-        delimiter (string): what delimiter to split the text to.
+        delimiter (string): the delimiter to split the text with. Use '**' for bold, '*' for italics, '`' for inline code.
         text_type (string): what text_type the parts between delimiters should be.
     
     Returns:
         list: a list of new TextNode objects.
     """
     delimited_nodes = []
+
+    # Use regex pattern depending on the delimiter
+    if delimiter == "**":
+        pattern = r"\*\*(.+?)\*\*"
+    elif delimiter == "*":
+        pattern = r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)"
+    elif delimiter == "`":
+        pattern = r"`(.+?)`"
+    else:
+        raise ValueError("Unsupported delimiter")
+
     for node in old_nodes:
-        if node.text_type == "text" and node.text:
-            new_text = node.text.split(delimiter)
-            for index, part in enumerate(new_text):
-                text_node_type = text_type if index % 2 != 0 else "text"
-                if part:
-                    delimited_nodes.append(TextNode(part, text_node_type))
+        if node.text_type == "text":
+            text = node.text
+            pos = 0
+
+            for match in re.finditer(pattern, text):
+                start, end = match.span()
+                # Add text before the match as normal text
+                if start > pos:
+                    delimited_nodes.append(TextNode(text[pos:start], "text"))
+
+                # Add matched text as the specified text type
+                delimited_nodes.append(TextNode(match.group(1), text_type))
+
+                # Update the position
+                pos = end
+
+            # Add any remaining text after the last match
+            if pos < len(text):
+                delimited_nodes.append(TextNode(text[pos:], "text"))
         else:
             delimited_nodes.append(node)
+
     return delimited_nodes
 
 def extract_markdown_images(text):
@@ -84,6 +113,8 @@ def split_nodes_link(old_nodes):
     TextNode("some text", text_type="link", "link").
     """
     new_nodes = []
+    
+    # Pattern to match [some text](link)
     pattern = r"(\[[^\[\]]*\]\([^\(\)]*\))"
     
     for old_node in old_nodes:
@@ -94,11 +125,13 @@ def split_nodes_link(old_nodes):
                 if re.fullmatch(pattern, part):
                     extracted_link = extract_markdown_links(part)
                     if extracted_link:
-                        new_nodes.append(TextNode(extracted_link[0][0], "link", extracted_link[0][1]))
+                        link_text, link_url = extracted_link[0]
+                        new_nodes.append(TextNode(link_text, "link", link_url))
                 else:
                     new_nodes.append(TextNode(part, old_node.text_type, old_node.url))
     
     return new_nodes
+
 
 def text_to_textnodes(text):
     """
@@ -111,12 +144,11 @@ def text_to_textnodes(text):
         list: a list of new TextNode objects.
     """
     new_nodes = [TextNode(text, "text")]
-    new_nodes = split_nodes_image(new_nodes)
-    new_nodes = split_nodes_link(new_nodes)
     new_nodes = split_nodes_delimiter(new_nodes, "**", "bold")
     new_nodes = split_nodes_delimiter(new_nodes, "*", "italic")
     new_nodes = split_nodes_delimiter(new_nodes, "`", "code")
-    
+    new_nodes = split_nodes_image(new_nodes)
+    new_nodes = split_nodes_link(new_nodes)
     return new_nodes
 
 def markdown_to_blocks(markdown):
