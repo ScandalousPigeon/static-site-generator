@@ -21,11 +21,12 @@ class TextNode:
             self.text_type
             self.url
         """
-        if self.text == other.text:
-            if self.text_type == other.text_type:
-                if self.url == other.url:
-                    return True
-        return False
+        return (
+            isinstance(other, TextNode) and
+            self.text == other.text and
+            self.text_type == other.text_type and
+            self.url == other.url
+        )
 
     def __repr__(self):
         """

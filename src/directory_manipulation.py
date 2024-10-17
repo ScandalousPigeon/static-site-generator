@@ -1,5 +1,6 @@
 import os
 import shutil
+from functions import *
 
 def delete_directory_contents(directory):
 
@@ -29,3 +30,22 @@ def copy_and_move_contents(source, destination):
         else:
             shutil.copy2(src_path, dest_path)
 
+def generate_page(from_path, template_path, dest_path):
+    
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}.")
+
+    with open(from_path) as file:
+        content = file.read()
+    
+    with open(template_path) as file:
+        template_content = file.read()
+    title = extract_title(content)
+    # assuming that h1 is always first in the document
+    removed_title = "".join(content)
+    content = markdown_to_html_node(content)
+    content = content.to_html()
+    new_content = template_content.replace("{{ Title }}", title)
+    new_content = template_content.replace("{{ Content }}", content)
+
+    with open(dest_path, "w") as file:
+        file.write(new_content)

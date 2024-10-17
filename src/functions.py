@@ -20,17 +20,12 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     """
     delimited_nodes = []
     for node in old_nodes:
-        if node.text_type == "text":
-            if node.text:
-                new_text = node.text.split(delimiter)
-                for index, part in enumerate(new_text):
-                    if part:
-                        if index % 2 == 0:
-                            delimited_nodes.append(TextNode(part, "text"))
-                        else:
-                            delimited_nodes.append(TextNode(part, text_type))
-            else:
-                delimited_nodes.append(node)
+        if node.text_type == "text" and node.text:
+            new_text = node.text.split(delimiter)
+            for index, part in enumerate(new_text):
+                text_node_type = text_type if index % 2 != 0 else "text"
+                if part:
+                    delimited_nodes.append(TextNode(part, text_node_type))
         else:
             delimited_nodes.append(node)
     return delimited_nodes
@@ -62,22 +57,19 @@ def split_nodes_image(old_nodes):
     TextNode("alt text", text_type="image", "image").
     """
     new_nodes = []
-    
-    # Pattern to match markdown images
     pattern = r"(!\[[^\[\]]*\]\([^\(\)]*\))"
     
     for old_node in old_nodes:
         split_parts = re.split(pattern, old_node.text)
         
-        part_index = 0
         for part in split_parts:
             if part:
-                if not re.search(pattern, part):
-                    new_nodes.append(TextNode(part, old_node.text_type, old_node.url))
-                else:
+                if re.fullmatch(pattern, part):
                     extracted_image = extract_markdown_images(part)
-                    new_nodes.append(TextNode(extracted_image[0][0], "image", extracted_image[0][1]))
-            
+                    if extracted_image:
+                        new_nodes.append(TextNode(extracted_image[0][0], "image", extracted_image[0][1]))
+                else:
+                    new_nodes.append(TextNode(part, old_node.text_type, old_node.url))
     
     return new_nodes
 
@@ -92,8 +84,6 @@ def split_nodes_link(old_nodes):
     TextNode("some text", text_type="link", "link").
     """
     new_nodes = []
-    
-    # Pattern to match [some text](link)
     pattern = r"(\[[^\[\]]*\]\([^\(\)]*\))"
     
     for old_node in old_nodes:
@@ -101,11 +91,12 @@ def split_nodes_link(old_nodes):
         
         for part in split_parts:
             if part:
-                if not re.search(pattern, part):
-                    new_nodes.append(TextNode(part, old_node.text_type, old_node.url))
+                if re.fullmatch(pattern, part):
+                    extracted_link = extract_markdown_links(part)
+                    if extracted_link:
+                        new_nodes.append(TextNode(extracted_link[0][0], "link", extracted_link[0][1]))
                 else:
-                    extracted_image = extract_markdown_links(part)
-                    new_nodes.append(TextNode(extracted_image[0][0], "link", extracted_image[0][1]))
+                    new_nodes.append(TextNode(part, old_node.text_type, old_node.url))
     
     return new_nodes
 
@@ -140,50 +131,29 @@ def block_to_block_type(block):
     the type of block (heading, code, quote, unordered list, ordered
     list or paragraph).
     """
-    # testing if heading
+    # Heading detection
     if block.startswith("#"):
-        number_of_hashes = 0
-        for ch in block:
-            if ch == "#":
-                number_of_hashes += 1
-            else:
-                break
+        number_of_hashes = len(block) - len(block.lstrip("#"))
         if 1 <= number_of_hashes <= 6:
             return "heading"
-    
-    # testing if code
+
+    # Code detection
     if block.startswith("```") and block.endswith("```"):
         return "code"
-    
-    # testing if quote
-    is_quote = True
-    test_for_quote = block.split("\n")
-    for line in test_for_quote:
-        if line[0] != ">":
-            is_quote = False
-            break
-    if is_quote:
+
+    # Quote detection
+    if all(line.startswith(">") for line in block.split("\n")):
         return "quote"
-    
-    # testing if unordered list
-    is_unordered_list = True
-    test_for_unordered_list = block.split("\n")
-    for line in test_for_quote:
-        if line[0] not in "*-":
-            is_unordered_list = False
-    if is_unordered_list:
+
+    # Unordered list detection
+    if all(line.lstrip().startswith(("*", "-")) for line in block.split("\n")):
         return "unordered_list"
-    
-    # testing if ordered_list
-    is_ordered_list = True
-    test_for_ordered_list = block.split("\n")
-    for line in test_for_ordered_list:
-        if line[0] not in "1234567890" and line[1:3] != ". ":
-            is_ordered_list = False
-    if is_ordered_list:
+
+    # Ordered list detection
+    if all(re.match(r"^\d+\.\s", line.lstrip()) for line in block.split("\n")):
         return "ordered_list"
 
-    # if none of the above, it is a paragraph
+    # Paragraph detection
     return "paragraph"
 
 def parse_raw_text(raw_text):
@@ -191,7 +161,7 @@ def parse_raw_text(raw_text):
 
 def markdown_to_html_node(markdown):
     """
-    Function to convert a full markdown document to a single HTMLNode.
+    Function to convert a full markdown document to a single HTMLNode.2
     """
 
     if not markdown:
@@ -215,42 +185,48 @@ def markdown_to_html_node(markdown):
                     tag = f"h{number_of_hashes}"
                     stripped_line = line.lstrip("#").strip()
                     parsed_raw_text = parse_raw_text(stripped_line)
-                    new_child_node = HTMLNode(tag=tag, children=parsed_raw_text)
+                    new_child_node = ParentNode(tag=tag, children=parsed_raw_text)
                     children.append(new_child_node)
             case "code":
                 tag = "code"
                 stripped_block = block.strip().strip("`").strip()
-                new_child_node = HTMLNode(tag="pre", children=[HTMLNode(tag=tag, value=stripped_block)])
+                new_child_node = ParentNode(tag="pre", children=[LeafNode(tag=tag, value=stripped_block)])
                 children.append(new_child_node)
             case "quote":
                 tag = "blockquote"
                 stripped_block = "\n".join([line.lstrip("> ").rstrip() for line in block.split("\n")])
                 parsed_raw_text = parse_raw_text(stripped_block)
-                new_child_node = HTMLNode(tag=tag, value=None, children=parsed_raw_text)
+                new_child_node = ParentNode(tag=tag, children=parsed_raw_text)
                 children.append(new_child_node)
             case "unordered_list":
                 tag = "ul"
                 list_items = block.split("\n")
-                parsed_list_items = []
-                for item in list_items:
-                    parsed_list_items.append(parse_raw_text(item[1:].lstrip()))
-                new_child_node = HTMLNode(tag=tag, value=None, children=[HTMLNode(tag="li", children=item) for item in parsed_list_items])
+                parsed_list_items = [ParentNode(tag="li", children=parse_raw_text(item[1:].strip())) for item in list_items]
+                new_child_node = ParentNode(tag=tag, children=parsed_list_items)
                 children.append(new_child_node)
             case "ordered_list":
                 tag = "ol"
                 list_items = block.split("\n")
-                parsed_list_items = []
-                for item in list_items:
-                    parsed_list_items.append(parse_raw_text(item[2:].lstrip()))
-                new_child_node = HTMLNode(tag=tag, value=None, children=[HTMLNode(tag="li", children=item) for item in parsed_list_items])
+                parsed_list_items = [ParentNode(tag="li", children=parse_raw_text(re.sub(r"^\d+\.\s", "", item).strip())) for item in list_items]
+                new_child_node = ParentNode(tag=tag, children=parsed_list_items)
                 children.append(new_child_node)
             case "paragraph":
                 tag = "p"
-                parsed_raw_text = parse_raw_text(block)
-                new_child_node = HTMLNode(tag=tag, children=parsed_raw_text)
+                new_child_node = LeafNode(tag=tag, value=block)
                 children.append(new_child_node)
             case _:
                 raise Exception("invalid block type")
 
-    new_node = HTMLNode(tag="div", children=children)
+    new_node = ParentNode(tag="div", children=children)
     return new_node
+
+def extract_title(markdown):
+    """
+    Extract the heading h1 from a given markdown document.
+    """
+    pattern = r"^#\s+(.*?)$"
+    header = re.findall(pattern, markdown, re.MULTILINE)
+    if not header:
+        return None
+
+    return header[0].strip()

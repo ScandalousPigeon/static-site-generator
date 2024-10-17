@@ -43,7 +43,7 @@ class HTMLNode:
         Returns a string that represents the HTML attributes of the node
         """
         if self.props:
-            new_dict = [f'{entry}="{props[entry]}"' for entry in props]
+            new_dict = [f'{entry}="{self.props[entry]}"' for entry in props]
             return " " + " ".join(new)
         return ""
 
@@ -60,6 +60,9 @@ class LeafNode(HTMLNode):
                 if self.props == other.props:
                     return True
         return False
+
+    def __repr__(self):
+        return self.value
         
     def to_html(self):
         if self.value == "":
@@ -88,6 +91,14 @@ class ParentNode(HTMLNode):
             collected += child.to_html()
 
         return f"<{self.tag}{self.props_to_html()}>{collected}</{self.tag}>"
+
+    def __eq__(self, other):
+        if self.tag == other.tag:
+            if self.value == other.value:
+                if self.children == other.children:
+                    if self.props == other.props:
+                        return True
+        return False
 
 def text_node_to_html_node(text_node: TextNode):
     """
